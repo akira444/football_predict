@@ -1,0 +1,20 @@
+{% extends "game/base.html" %} 
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<div class="container">
+    <div class="h2 text-center">Create a new game</div>
+    {% include 'game/messages.html' %}
+    <form method="POST">
+        {% csrf_token %}
+        {{ form | crispy }}
+
+        <div class="col text-center mt-3 mb-3">
+            <button type="submit" class="btn btn-success text-center">Save Game</button>
+        </div>
+    </form>
+</div>
+
+{% endblock content %}

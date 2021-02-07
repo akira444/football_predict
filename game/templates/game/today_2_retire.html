@@ -1,0 +1,53 @@
+{% extends "game/base.html" %} 
+
+{% block content %}
+
+<div class="container text-center">
+    <h2 class="h2 mb-3">{{fcnt}} fixtures today</h2>
+    <div class="text-center mb-2">Last Update from API: {{lupdate.last_fixture_update|date:'D, d-M-Y H:i:s'}}</div>
+    <form action="{% url 'refresh_today' %}" method="post">
+        {% csrf_token %}
+        <input type="submit" class="btn-success " value="Refresh from API">
+    </form>
+    <table class="table mt-3">
+        <thead>
+            <th scope="col">ID</th>
+            <th scope="col">League</th>
+            <th scope="col">League Logo</th>
+            <th scope="col">Start Time</th>
+            <th scope="col">Status</th>
+            <th scope="col">Home Team</th>
+            <th scope="col"></th>
+            <th scope="col">Away Team</th>
+            <th scope="col"></th>
+            <th scope="col">Home Goals</th>
+            <th scope="col">Away Goals</th>
+            <th scope="col">Home Odds </th>
+            <th scope="col">Draw Odds</th>
+            <th scope="col">Away Odds</th>
+        </thead>
+        <tbody>
+        {% for fixture in fixtures %}
+            <tr>
+            <td class="align-middle">{{fixture.id}}</td>
+            <td class="align-middle">{{fixture.league.name}}</td>
+            <td class="align-middle"><img src={{fixture.league.logo}} class="img-fluid" style="width:50%;"></td>
+            <td class="align-middle">{{fixture.match_start|date:'H:i'}}</td>
+            <td class="align-middle">{{fixture.status}}</td>
+            <td class="align-middle">{{fixture.home_team.name}}</td>
+            <td class="align-middle"><img src={{fixture.home_team.logo}} class="img-fluid" style="width:100%;"></td>
+            <td class="align-middle">{{fixture.away_team.name}}</td>
+            <td class="align-middle"><img src={{fixture.away_team.logo}} class="img-fluid" style="width:100%;"></td>
+            <td class="align-middle">{{fixture.home_goals}}</td>
+            <td class="align-middle">{{fixture.away_goals}}</td>
+            <td class="align-middle">{{fixture.home_odds|floatformat:3}}</td>
+            <td class="align-middle">{{fixture.draw_odds|floatformat:3}}</td>
+            <td class="align-middle">{{fixture.away_odds|floatformat:3}}</td>
+
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+{% endblock content %}

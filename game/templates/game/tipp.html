@@ -1,0 +1,38 @@
+{% extends "game/base.html" %} 
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<div class="container text-center">
+    <div class="h2">Game: {{game.name}}</div>
+    <div class="h2">Fixture: {{fixture.home_team.name}} vs {{fixture.away_team.name}}</div>
+</div>
+
+<div class="container mt-3">
+    <div class="h2 text-center mb-3">Prediction for the match result</div>
+    {% include 'game/messages.html' %}
+
+    <form method="POST">
+        {% csrf_token %}
+        <input type="text" id="fixture_id" name="fixture_id" class="d-none" value={{fixture.id}}>
+        <input type="text" id="game_id" name="game_id" class="d-none" value={{game.id}}>
+        <div class="form-row">
+            <div class="form-group col-md-2 offset-md-4 text-center">
+                {{ form.tipp_home|as_crispy_field}}
+            </div>
+            <div class="form-group col-md-2 offset-md-2 text-center">
+                {{ form.tipp_away|as_crispy_field}}
+            </div>
+        </div>
+        
+        <div class="col text-center">
+            <button type="submit" class="btn btn-success">Save</button>
+        </div>
+    </form>
+
+</div>
+
+
+
+{% endblock content %}

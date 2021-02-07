@@ -1,0 +1,97 @@
+<div class="container">
+    <table class="table mt-3">
+        <thead>
+            {% if days == 0 %}
+                <th scope="col">Game</th>
+            {% endif %}
+            <th scope="col">Logo</th>
+            <th scope="col">League</th>
+            {% if days > 0 %}
+                <th scope="col">Match Day</th>
+            {% endif %}
+            <th scope="col">Start Time</th>
+            <th scope="col">Status</th>
+            <th scope="col">Logo</th>
+            <th scope="col">Home Team</th>
+            <th scope="col">Logo</th>
+            <th scope="col">Away Team</th>
+            <th scope="col">Home Goals</th>
+            <th scope="col">Away Goals</th>
+            <th scope="col">Home Odds </th>
+            <th scope="col">Draw Odds</th>
+            <th scope="col">Away Odds</th>
+            <th scope="col">Home Tipp</th>
+            <th scope="col">Away Tipp</th>
+        </thead>
+        <tbody>
+    {% if fixtures_started %}
+        {% for fixture in fixtures_started %}
+            <tr scope="row">
+            {% if days == 0 %}
+                <td class="align-middle">{{fixture.g_name}}</td>
+            {% endif %}
+            <td class="align-middle"><img src={{fixture.l_logo}} class="img-fluid" style="width:100%;"></td>
+            <td class="align-middle">{{fixture.l_name}}</td>
+            {% if days > 0 %}
+                <td class="align-middle">{{fixture.match_start|date:'D, d.m'}}</td>
+            {% endif %}
+            <td class="align-middle">{{fixture.match_start|date:'H:i'}}</td>
+            <td class="align-middle">{{fixture.status}}</td>
+            <td class="align-middle {% if fixture.home_odds < fixture.away_odds %} table-success {% endif %}"><img src={{fixture.ht_logo}} class="img-fluid" style="width:100%;"></td>
+            <td class="align-middle {% if fixture.home_odds < fixture.away_odds %} table-success {% endif %}">{{fixture.ht_name}}</td>
+            <td class="align-middle {% if fixture.home_odds > fixture.away_odds %} table-success {% endif %}"><img src={{fixture.at_logo}} class="img-fluid" style="width:100%;"></td>
+            <td class="align-middle {% if fixture.home_odds > fixture.away_odds %} table-success {% endif %}">{{fixture.at_name}}</td>
+            <td class="align-middle text-center">{{fixture.home_goals}}</td>
+            <td class="align-middle text-center">{{fixture.away_goals}}</td>
+            <td class="align-middle">{{fixture.home_odds|floatformat:3}}</td>
+            <td class="align-middle">{{fixture.draw_odds|floatformat:3}}</td>
+            <td class="align-middle">{{fixture.away_odds|floatformat:3}}</td>
+            <td class="align-middle text-center">{{fixture.tipp_home}}</td>
+            <td class="align-middle text-center">{{fixture.tipp_away}}</td>
+            <td class="align-middle"><a class="btn bg-transparent" href="{% url 'info_fixture' game_id=fixture.game_id fixture_id=fixture.id %}"><i class="fas fa-info ml-1"></i></a></td>
+            </tr>
+        {% endfor %}
+    {% endif %}
+
+    {% if fixtures_tostart %}
+        {% for fixture in fixtures_tostart %}
+            <tr scope="row">
+            {% if days == 0 %}
+                <td class="align-middle">{{fixture.g_name}}</td>
+            {% endif %}
+            <td class="align-middle"><img src={{fixture.l_logo}} class="img-fluid" style="width:100%;"></td>
+            <td class="align-middle">{{fixture.l_name}}</td>
+            {% if days > 0 %}
+                <td class="align-middle">{{fixture.match_start|date:'D, d.m'}}</td>
+            {% endif %}
+            <td class="align-middle">{{fixture.match_start|date:'H:i'}}</td>
+            <td class="align-middle">{{fixture.status}}</td>
+            <td class="align-middle {% if fixture.home_odds < fixture.away_odds %} table-success {% endif %}"><img src={{fixture.ht_logo}} class="img-fluid" style="width:100%;"></td>
+            <td class="align-middle {% if fixture.home_odds < fixture.away_odds %} table-success {% endif %}">{{fixture.ht_name}}</td>
+            <td class="align-middle {% if fixture.home_odds > fixture.away_odds %} table-success {% endif %}"><img src={{fixture.at_logo}} class="img-fluid" style="width:100%;"></td>
+            <td class="align-middle {% if fixture.home_odds > fixture.away_odds %} table-success {% endif %}">{{fixture.at_name}}</td>
+            <td class="align-middle text-center">{{fixture.home_goals}}</td>
+            <td class="align-middle text-center">{{fixture.away_goals}}</td>
+            <td class="align-middle">{{fixture.home_odds|floatformat:3}}</td>
+            <td class="align-middle">{{fixture.draw_odds|floatformat:3}}</td>
+            <td class="align-middle">{{fixture.away_odds|floatformat:3}}</td>
+            <td class="align-middle text-center">{{fixture.tipp_home}}</td>
+            <td class="align-middle text-center">{{fixture.tipp_away}}</td>
+            {% if fixture.tipp_id is not None %}
+                <td class="align-middle"><a class="btn bg-transparent" href="{% url 'tipp_update' fixture.tipp_id %}"><i class="fas fa-pencil-alt"></i></a></td>
+                <td class="align-middle">
+                    <form action="{% url 'tipp_delete' fixture.tipp_id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn bg-transparent"><i class="fas fa-trash-alt"></i></button>
+                    </form>
+                </td>
+            {% else %}
+                <td class="align-middle"><a class="btn bg-transparent" href="{% url 'tipp_create' game_id=fixture.game_id fixture_id=fixture.id %}"><i class="fas fa-pencil-alt"></i></a></td>
+            {% endif %}
+            
+            </tr>
+        {% endfor %}
+    {% endif %}
+        </tbody>
+    </table>
+</div>

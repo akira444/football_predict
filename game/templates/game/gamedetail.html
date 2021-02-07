@@ -1,0 +1,96 @@
+{% extends "game/base.html" %} 
+
+{% block content %}
+
+    <div class="container">
+        <div class="h1 text-center btn-block btn-info pb-3 pt-3">{{game.name}}</div>
+        
+        <div class="row ">
+            <div class="col-6">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="h4 text-center">Current Ranking</div>
+                    </div>
+                </div>
+
+                <div class="row justify-content-center">
+                    <div class="col-8">
+                        <ul class="list-group list-group-flush">
+                            {% for ranking in rankings %}
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span style="color:#C9B037;">{{ forloop.counter }}.<i class="fas fa-trophy mr-2 ml-2"></i>{{ranking.user.username}}</span>
+                                    <!-- Silver: #B4B4B4    Bronze: #AD8A56   -->
+                                    <span>Points: {{ranking.t_score}} Tipps: {{ranking.t_tipps}}</span> 
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="col-6  border border-secondary">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="h4 text-center">Rules of the Game</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                Exact Result:<span>{{game.pts_exact}} Points</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                Goal Difference:<span>{{game.pts_difference}} Points</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-6">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                Winner:<span>{{game.pts_winner}} Points</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                Wrong Prediction:<span>{{game.pts_wrong}} Points</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-12">
+                        <ul class="list-group list-group-flush">
+                            {% for league in leagues %}
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span><img src={{league.logo}} class="img-fluid mr-2" style="width:15%;">{{league.name}} ({{league.country.name}})</span>
+                                    <span>to play ({{league.toplay}})/ finished ({{league.finished}})</span> 
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            {% include 'game/messages.html' %}
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                {% include 'game/fixture_counter.html' %}
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                {% include 'game/refresh_today.html' %}
+
+                {% include 'game/fixtures_table.html' %}
+            </div>    
+        </div>
+        
+    </div>
+    
+
+{% endblock content %}

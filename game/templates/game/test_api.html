@@ -1,0 +1,15 @@
+{% extends "game/base.html" %} 
+
+{% block content %}
+
+{% include 'game/messages.html' %}
+
+<div class="container mt-3">
+    <div class="h2">Test Buttons, etc.</div>
+    <form action="{% url 'test_days' %}" method="post">
+        {% csrf_token %}
+        <input type="submit" class="btn-success" value="Update mode days">
+    </form>
+</div>
+
+{% endblock content %}
