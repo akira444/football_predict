@@ -2,7 +2,70 @@
 
 {% block content %}
 
-Info
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header h4 text-center">
+                    {{game.name}}
+                </div>
+                <div class="card-body">
+                    {% include 'game/fixture_card_header.html' %}
+
+                    {% if fixture.home_goals != None %}
+                        <div class="row align-items-center mb-4">
+                            <div class="col-5 display-2 text-center">{{fixture.home_goals}}</div>
+                            <div class="col-2 display-2 text-center">:</div>
+                            <div class="col-5 display-2 text-center">{{fixture.away_goals}}</div>
+                        </div>
+                        <div class="row align-items-center mt-2">
+                            <div class="col text-center h4">{{fixture.status}}</div>
+                        </div>
+                        <div class="row align-items-center mb-3">
+                            <div class="col text-center">Last Update from API: {{lupdate.last_fixture_update|date:'D, d-M-Y H:i:s'}}</div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if fixture.home_odds %}
+                        {% include 'game/fixture_card_odds.html' %}
+                    {% endif %}
+
+                    <div class="row mt-4 align-items-center">
+                        <div class="col text-center">
+                            <span class="h3">Predictions & Scores</span>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-2 align-items-center border-bottom">
+                        <div class="col-5 offset-1 h6">Player</div>
+                        <div class="col-3 h6 text-center">Tipp</div>
+                        <div class="col-2 offset-1 h6 text-center">Score</div>
+                    </div>
+                    {% for tipp in mytipp %}
+                        <div class="row align-items-center border-bottom">
+                            <div class="col-5 offset-1">{{tipp.player.user.username}}</div>
+                            <div class="col-3 text-center">{{tipp.tipp_home}} : {{tipp.tipp_away}}</div>
+                            <div class="col-2 offset-1 text-center {% if tipp.yn_final == 0 %} text-muted {% endif %}">{{tipp.score}}</div>
+                        </div>  
+                    {% endfor %}
+                    {% for tipp in tipps %}
+                        <div class="row align-items-center border-bottom">
+                            <div class="col-5 offset-1">{{tipp.player.user.username}}</div>
+                            <div class="col-3 text-center">{{tipp.tipp_home}} : {{tipp.tipp_away}}</div>
+                            <div class="col-2 offset-1 text-center {% if mytipp.yn_final == 0 %} text-muted {% endif %}">{{tipp.score}}</div>
+                        </div>
+                    {% endfor %}
+                    
+                    
+
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
 
 
 {% endblock content %}

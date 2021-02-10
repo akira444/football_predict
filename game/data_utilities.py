@@ -98,7 +98,7 @@ def TippQuery(**kwargs):
     # returns a RawQuerySet which can be used in templates to render a page
 
     sql = '''SELECT f.id AS id, g.id AS game_id, pg.player_id AS player_id, f.match_start, f.status, f.status_short, f.home_goals, f.away_goals, f.home_odds, f.draw_odds, f.away_odds,
-        ht.name AS ht_name, ht.logo AS ht_logo, awt.name AS at_name, awt.logo AS at_logo, l.name AS l_name, l.logo AS l_logo, g.name AS g_name, t.id AS tipp_id, t.tipp_home, t.tipp_away
+        ht.name AS ht_name, ht.logo AS ht_logo, awt.name AS at_name, awt.logo AS at_logo, l.name AS l_name, l.logo AS l_logo, g.name AS g_name, t.id AS tipp_id, t.tipp_home, t.tipp_away, t.score, t.yn_final
         FROM game_fixture AS f
         JOIN game_team AS ht ON ht.id = f.home_team_id
         JOIN game_team AS awt ON awt.id = f.away_team_id
@@ -127,7 +127,12 @@ def TippQuery(**kwargs):
         sql_where = sql_where + ' AND f.match_start <= %s '
         list_where.append(kwargs['to_date'].strftime('%Y-%m-%d %H:%M:%S'))
 
-    sql = sql + sql_where + ' ORDER BY f.match_start ASC'
+    if 'order' in kwargs:
+        sql_order = kwargs['order']
+    else:
+        sql_order = 'ASC'
+
+    sql = sql + sql_where + ' ORDER BY f.match_start ' + sql_order
 
     fixtures = Fixture.objects.raw(sql, list_where)
 

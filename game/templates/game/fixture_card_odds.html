@@ -1,0 +1,12 @@
+{% if fixture %}
+    <div class="row mt-2 pt-1 align-items-center border-top">
+        <div class="col-5 h6  text-center ">{{fixture.home_team.name}} win</div>
+        <div class="col-2 h6  text-center">Draw</div>
+        <div class="col-5 h6  text-center ">{{fixture.away_team.name}} win</div>
+    </div>
+    <div class="row align-items-center border-bottom">
+        <div class="col-5 h6  text-center {% if fixture.home_odds < fixture.away_odds %} bg-success {% endif %}">{{fixture.home_odds|floatformat:3}}</div>
+        <div class="col-2 h6  text-center">{{fixture.draw_odds|floatformat:3}}</div>
+        <div class="col-5 h6  text-center {% if fixture.home_odds > fixture.away_odds %} bg-success {% endif %}">{{fixture.away_odds|floatformat:3}}</div>
+    </div>
+{% endif %}

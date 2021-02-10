@@ -12,7 +12,7 @@ urlpatterns = [
     path('login', views.LoginView.as_view(), name='login'),
     path('accounts/login', views.LoginView.as_view(), name='mixinlogin'),
     path('logout', views.LogOutUser, name='logout'),
-    path('profile', TemplateView.as_view(template_name='game/profile.html')),
+    path('profile', views.ProfileView.as_view(), name='profile'),
 
     # New games and invitations
     path('new_game', views.CreateGameView.as_view(), name='new_game'),
@@ -24,7 +24,11 @@ urlpatterns = [
     path('games/<int:pk>/decline', views.GameDecline.as_view(), name='game_decline'),
     path('gamedetail/<int:pk>', views.GameDetail.as_view(), name='gamedetail'),
 
-    path('ranking', TemplateView.as_view(template_name='game/ranking.html')),
+    # Ranking information
+    path('ranking/<int:pk>', views.RankingView.as_view(), name='ranking'),
+    path('ranking/<int:game_id>/<int:player_id>/detail', views.RankingDetailView.as_view(), name='ranking_detail'),
+
+    # Today, refresh and fixture info
     path('today', views.TodayView.as_view(), name='today'), 
     path('today/refresh', views.TodayRefreshView.as_view(), name='refresh_today'),
     path('info/fixture/<int:game_id>/<int:fixture_id>', views.InfoFixtureView.as_view(), name='info_fixture'),

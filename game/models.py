@@ -1,18 +1,21 @@
 from django.db import models
 from django.contrib.auth.models import User 
 
-# Table with the last update dates for fixtures, etc.
+
 class UpdateSchedule(models.Model):
+    # Table with the last update dates for fixtures, etc.
     next_league_update = models.DateField()  # Date when the next update for leagues and teams should run
     next_fixture_update = models.DateField() # Date when the next scheduled update for fixtures should run
     last_fixture_update = models.DateTimeField() # Date and time when the fixtures were last updated from the API
 
-# Table with api_ids of leagues are available to select in the prediction game
+
 class AvailableLeague(models.Model):
+    # Table with api_ids of leagues are available to select in the prediction game
     api_id = models.IntegerField(unique=True)
 
-# Countries
+
 class Country(models.Model):
+    # Countries
     name = models.CharField(max_length=128)
     code = models.CharField(max_length=5, null=True)
     flag = models.URLField(max_length=255, null=True)
@@ -20,8 +23,9 @@ class Country(models.Model):
     def __str__(self):
         return self.name
 
-# Leagues
+
 class League(models.Model):
+    # Leagues
     api_id = models.IntegerField(unique = True)
     name = models.CharField(max_length=128)
     season = models.IntegerField(blank=True, null=True)
@@ -36,8 +40,9 @@ class League(models.Model):
         return self.name
 
 
-# Teams
+
 class Team(models.Model):
+    # Teams
     api_id = models.IntegerField(unique=True)
     name = models.CharField(max_length=128)
     logo = models.URLField(max_length=255, null=True)
@@ -47,8 +52,9 @@ class Team(models.Model):
         return self.name
 
 
-# Fixtures
+
 class Fixture(models.Model):
+    # Fixtures
     api_id = models.IntegerField(unique = True)
     league = models.ForeignKey(League, on_delete=models.CASCADE)
     match_start = models.DateTimeField(blank=True, null=True)
@@ -63,8 +69,9 @@ class Fixture(models.Model):
     away_odds = models.FloatField(blank=True, null=True)
 
 
-# Games
+
 class Game(models.Model):
+    # Games
     name = models.CharField(max_length=128, null=False)
     leagues = models.ManyToManyField(League, through='Game_Leagues')
     pts_exact = models.IntegerField(blank=False, null=False)
@@ -77,20 +84,23 @@ class Game(models.Model):
     def __str__(self):
         return self.name
 
-# Invitations to Games - actually not used currently
+
 class Invitation(models.Model):
+    # Invitations to Games - actually not used currently
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
     email = models.EmailField(max_length=255)
 
-# Game_Leagues
-# This object/table is used to model the n:m relationship between Leagues and Games 
-# each Game can contain multiple Leagues and each League can be included in mulitple Games
 class Game_Leagues(models.Model):
+    # Game_Leagues
+    # This object/table is used to model the n:m relationship between Leagues and Games 
+    # each Game can contain multiple Leagues and each League can be included in mulitple Games
+
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
     league = models.ForeignKey(League, on_delete=models.CASCADE)
 
-# Extend the standard users table to allow profile pictures, and the m:n relation to assign games to players
+
 class Player(models.Model):
+    # Extend the standard users table to allow profile pictures, and the m:n relation to assign games to players
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     pic = models.URLField(max_length=255)
     games = models.ManyToManyField(Game, through='Player_Games')
@@ -98,18 +108,21 @@ class Player(models.Model):
     def __str__(self):
         return self.user.username  # This way the username is shown in the new game form
 
-# Table for the differnt status of a player in a game Creator, Invited, Declined, Active
+
 class PlayerStatus(models.Model):
+    # Table for the differnt status of a player in a game Creator, Invited, Declined, Active
     name = models.CharField(max_length=20)
 
-# Table used to model the n:m relationship between Games and Players
+
 class Player_Games(models.Model):
+    # Table used to model the n:m relationship between Games and Players
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     status = models.ForeignKey(PlayerStatus, on_delete=models.CASCADE, default=3)  # 3 is the id of the "invited" status
 
-# Tipps
+
 class Tipp(models.Model):
+    # Tipps
     tipp_home = models.IntegerField(blank=False, null=False)
     tipp_away = models.IntegerField(blank=False, null=False)
     fixture = models.ForeignKey(Fixture, on_delete=models.CASCADE)

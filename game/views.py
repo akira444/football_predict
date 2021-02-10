@@ -6,12 +6,11 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.db import IntegrityError
-from django.db.models import Q
-from django.db.models import Count, Sum
+from django.db.models import Q, F, Count, Sum
 from django.utils.timezone import make_aware
 import requests
 from game.models import League, Fixture, UpdateSchedule, Player, Player_Games, Game, Tipp
-from game.forms import SignUpForm, GameForm, TippForm
+from game.forms import SignUpForm, GameForm, TippForm, InviteForm, ProfileForm
 import game.api_data as api_calls
 from game.data_utilities import GetTippList, TippQuery
 from datetime import date, timedelta, datetime
@@ -80,8 +79,9 @@ def LogOutUser(request):
         return redirect('login')
         
 
-# This is used to set up new games
+
 class CreateGameView(LoginRequiredMixin, View):
+    # This is used to set up new games
     template = 'game/new_game.html'
     def get(self, request):
         form = GameForm()
@@ -133,14 +133,70 @@ class GameDecline(LoginRequiredMixin, View):
 
         return redirect('games')
 
-# Game Detail
+# Invite view
+class InviteView(LoginRequiredMixin, View):
+    template = 'game/invite.html'
+    def get(self, request, pk):
+        game = get_object_or_404(Game, pk=pk)
+        form = InviteForm(instance=game)
+        ctx = {'form' : form}
+        return render(request, self.template, ctx)
+
+    def post(self, request, pk):
+        # Update player information
+        player = Player.objects.all().filter(user__username = request.user).get()    
+        game = get_object_or_404(Game, pk=pk, player=player.id)
+        
+        form = InviteForm(request.POST, instance=game)  
+        form.save()
+
+        return redirect('games')
+
+
+class ProfileView(LoginRequiredMixin, View):
+    template = 'game/profile.html'
+    def get(self, request):
+        user = get_object_or_404(User, username=request.user)
+        form = ProfileForm(instance=user)   
+        ctx = {'form' : form}
+        return render(request, self.template, ctx)
+
+    def post(self, request):
+        user = authenticate(request, username=request.user, password=request.POST['oldpassword'])
+        if user is None:
+            messages.error(request, 'Old password is not correct!')
+            form = ProfileForm(request.POST)   
+            ctx = {'form' : form}
+            return render(request, self.template, ctx)
+        else:
+            if request.POST['password1'] != request.POST['password2']:
+                form = ProfileForm(request.POST) 
+                ctx = {'form' : form}
+                messages.error(request, 'Passwords do not match!')
+                return render(request, self.template, ctx)
+        
+        try:
+            user = User.objects.all().filter(username=request.user)
+            user.update(email=request.POST['email'], username=request.POST['username'])
+            user = User.objects.get(username=request.POST['username'])
+            user.set_password(request.POST['password1'])
+            user.save()
+            messages.success(request, 'Your Profile has been updated!')
+            user = authenticate(request, username=request.POST['username'], password=request.POST['password1'])
+            login(request, user)
+            return redirect('games')
+        except IntegrityError:
+            messages.error(request, 'Username is already taken, please try another!')
+            return render(request, self.template, ctx)
+
 class GameDetail(LoginRequiredMixin, View):
+    # Game Detail
     template = 'game/gamedetail.html'
 
     def get(self, request, pk):
         # Get info about the game
         game = Game.objects.all().filter(id=pk).get()
-        rankings = Player.objects.all().filter(tipp__game_id = game.id).annotate(t_score = Sum('tipp__score'), t_tipps = Count('tipp__score')).order_by('-t_score')
+        rankings = Player.objects.all().filter(tipp__game_id = game.id).annotate(t_score = Sum('tipp__score'), t_tipps = Count('tipp__id')).order_by('-t_score')
         li_status = ['FT','AET','PEN', 'ABD', 'AWD']
         finished = Count('fixture', filter=Q(fixture__status_short__in=li_status))
         toplay = Count('fixture', filter=(~Q(fixture__status_short__in=li_status)))
@@ -153,23 +209,12 @@ class GameDetail(LoginRequiredMixin, View):
         fcnt = len(list(fixtures_started)) + len(list(fixtures_tostart))
         lu = UpdateSchedule.objects.all().first()
 
+        request.session['redirect_tipp'] = 'gamedetail'
         ctx = {'game' : game, 'leagues' : leagues, 'rankings' : rankings, 'fcnt' : fcnt, 'lupdate' : lu, 'fixtures_started' : fixtures_started, 'fixtures_tostart' : fixtures_tostart, 'days' : includedays-1 }
         return render(request, self.template, ctx)
 
-
-# Invite view
-class InviteView(LoginRequiredMixin, View):
-    def get(self, request, pk):
-
-        return render(request, 'game/invite.html')
-
-    def post(self, request, pk):
-        # Update invite information and send e-mails
-
-        return redirect('games')
-
-# Shows the screen with todays fixtures
 class TodayView(LoginRequiredMixin, View):
+    # Shows the screen with todays fixtures
     def get(self, request):
         td = date.today()
         includedays = 1
@@ -191,18 +236,20 @@ class TodayRefreshView(LoginRequiredMixin, View):
         return redirect(returnto)
 
 class InfoFixtureView(LoginRequiredMixin, View):
-    template = 'info_fixtures.html'
+    template = 'game/info_fixture.html'
     def get(self, request, game_id, fixture_id):
-        fixture = Fixture.objects.all(id=fixture_id).get()
-        tipps = Tipp.objects.all(game_id = game_id, fixture_id = fixture_id)
+        player = Player.objects.all().filter(user__username = request.user).get()
+        game = Game.objects.all().filter(id=game_id).get()
+        fixture = Fixture.objects.all().filter(id=fixture_id).get()
+        mytipp = Tipp.objects.all().filter(game_id = game_id, fixture_id = fixture_id, player_id = player.id)
+        tipps = Tipp.objects.all().filter(game_id = game_id, fixture_id = fixture_id).exclude(player_id = player.id)
         lu = UpdateSchedule.objects.all().first()  
-        ctx = {'tipps' : tipps, 'fixture' : fixture, 'lupdate' : lu}
+        ctx = {'game' : game, 'mytipp' : mytipp, 'tipps' : tipps, 'fixture' : fixture, 'lupdate' : lu}
         return render(request, self.template, ctx)
 
 
-
-# View to create tipps
 class TippCreateView(LoginRequiredMixin, View):
+    # View to create tipps
     template = 'game/tipp.html'
     def get(self, request, game_id, fixture_id):
         game = Game.objects.all().filter(id=game_id)
@@ -234,8 +281,9 @@ class TippCreateView(LoginRequiredMixin, View):
     
         return redirect('gamedetail', game_id)
 
-# View to update tipps
+
 class TippUpdateView(LoginRequiredMixin, View):
+    # View to update tipps
     template = 'game/tipp.html'
     def get(self, request, tipp_id):
         player = Player.objects.all().filter(user__username = request.user).get()     
@@ -285,6 +333,29 @@ class TippDeleteView(LoginRequiredMixin, View):
     
         return redirect('gamedetail', tipp.game_id)
 
+
+
+class RankingView(LoginRequiredMixin, View):
+    # View to display the ranking page if selected from Navbar
+    template = 'game/ranking.html'
+    def get(self, request, pk):
+        player = Player.objects.all().filter(user__username = request.user).get()
+        game = Game.objects.all().filter(id=pk).get()
+        rankings = Tipp.objects.all().filter(game_id = game.id).values('player_id', 'player__user__username').annotate(t_score = Sum('score'), t_total = Count('id'), 
+            t_exact = Count('id', filter=Q(score = F('game__pts_exact'))), t_difference = Count('id', filter=Q(score = F('game__pts_difference'))),
+            t_winner = Count('id', filter=Q(score = F('game__pts_winner'))), t_wrong = Count('id', filter=Q(score = F('game__pts_wrong')))).order_by('-t_score')
+        tipps = Tipp.objects.all().filter(player=player)
+        ctx = {'game' : game, 'rankings' : rankings}   
+        return render(request, self.template, ctx)
+
+class RankingDetailView(LoginRequiredMixin, View):
+    template = 'game/ranking_detail.html'
+    def get(self, request, game_id, player_id):
+        player = Player.objects.all().filter(user__username = request.user).get()
+        game = Game.objects.all().filter(id=game_id).get()
+        results = TippQuery(player_id=player_id, game_id=game_id, to_date=datetime.utcnow(), order='DESC') 
+        ctx = {'game' : game, 'results' : results, 'player' : player}
+        return render(request, self.template, ctx)
 
 # Test Functions
 

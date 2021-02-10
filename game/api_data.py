@@ -3,12 +3,12 @@ import pandas as pd
 from datetime import datetime, date, timedelta
 from django.utils.timezone import make_aware
 import sqlite3
-from game.secret import api_headers, db_name, leagues_list
-from game.models import UpdateSchedule, Fixture, Team, League
+from game.secret import api_headers, db_name
+from game.models import UpdateSchedule, Fixture, Team, League, AvailableLeague
 from game.data_utilities import UpdateGameScores
 
 def update_countries():
-    # Fill Country table - only run once, or update rarely
+    # Fill Country table - only run once, or update very rarely
     headers = api_headers
     conn = sqlite3.connect(db_name) 
 
@@ -24,6 +24,9 @@ def update_countries():
         try:
             id = cur.fetchone()[0]
             # Country exists - update
+            cur.execute(''' UPDATE game_country SET name = ?, code = ?, flag = ?
+                WHERE api_id = ?''', (country.country, country.code, country.flag, id ))
+            conn.commit()
         except:
             # New counry - insert
             cur.execute('INSERT INTO game_country (name, code, flag) VALUES (?,?,?)', (country.country, country.code, country.flag) )
@@ -32,20 +35,23 @@ def update_countries():
 
 
 def update_leagues():
+    # The Leagues update is called once a week
+    
     headers = api_headers
     conn = sqlite3.connect(db_name) 
 
     # Read countries from database 
     df_db_countries = pd.read_sql('SELECT id AS my_country_id, name as country FROM game_country', con=conn)
 
-    # Update Leagues
+    # Update Leagues, only "current" leagues are requested from the API (current in the API is the latest available season) 
     response = requests.get('https://api-football-v1.p.rapidapi.com/v2/leagues/current',headers=headers)
     leagues = response.json()
     leagues = leagues['api']['leagues']
 
-    df_leagues = pd.DataFrame(leagues, columns=['league_id', 'name', 'type', 'country', 'season', 'season_start', 'season_end', 'logo']) #Convert the leagues data to pandas dataframe
+    df_leagues = pd.DataFrame(leagues, columns=['league_id', 'name', 'type', 'country', 'season', 'season_start', 'season_end', 'logo']) # Convert the leagues data to pandas dataframe
 
     # Filter only relevant leagues
+    leagues_list = list(AvailableLeague.objects.values_list('api_id', flat=True)) # gets the list of available leagues from the database and converts to a list
     df_leagues = df_leagues[df_leagues.league_id.isin(leagues_list)]
 
     # Join Data to get internal country ID
@@ -54,7 +60,7 @@ def update_leagues():
     # insert leagues in database
     new_leagues = 0
     cur = conn.cursor()
-    for league in df_leagues.itertuples(index=False):#itertuples have to be used to loop through dataframe
+    for league in df_leagues.itertuples(index=False):# itertuples have to be used to loop through dataframe
         cur.execute('SELECT id FROM game_league WHERE api_id = ?', (league.league_id,))
         try:
             id = cur.fetchone()[0]
@@ -67,7 +73,7 @@ def update_leagues():
             cur.execute('''INSERT INTO game_league (api_id, name, is_current, season, season_start, season_end, logo, country_id )
                 VALUES (?,?,?,?,?,?,?,?)''', (league.league_id, league.name, 1, league.season, league.season_start, league.season_end, league.logo, league.my_country_id))
             conn.commit()
-            new_leagues += 1
+            new_leagues += 1 # New leagues are counted, if new leagues are inserted, teams and fixtures for these leagues have to be updated
     cur.close() 
 
     return new_leagues
@@ -84,6 +90,7 @@ def update_teams():
     # First initialise the dataframe holding all the data
     df_teams = pd.DataFrame(columns=['team_id','name','logo', 'country'])
     for league in leagues_list:
+        # Teams are retrieved from API per league
         teams_url = 'https://api-football-v1.p.rapidapi.com/v2/teams/league/' + str(league)
         response = requests.get(teams_url, headers=headers)
         teams = response.json()
@@ -134,20 +141,20 @@ def api_fixtures(api_url):
     return fixtures
 
 
-def get_fixtures(df_fixtures, **updatemode):
-    # **updatemode allows to pass flexible parameters as key-value pairs
+def get_fixtures(df_fixtures, **kwargs):
+    # **kwargs allows to pass flexible parameters as key-value pairs
 
-    if updatemode['mode'] == 'leagues':
+    if kwargs['mode'] == 'leagues':
         # fixtures for all leagues in leagues list are updated
-        for league in updatemode['leagues_list']:
+        for league in kwargs['leagues_list']:
             fixtures_url = 'https://api-football-v1.p.rapidapi.com/v2/fixtures/league/' + str(league)
             fixtures = api_fixtures(fixtures_url)    
             df_temp = pd.DataFrame(fixtures, columns=list(df_fixtures.columns)) 
             df_fixtures = df_fixtures.append(df_temp)
 
-    elif updatemode['mode'] == 'days':
+    elif kwargs['mode'] == 'days':
         # fixtures for today + 2 days are updated
-        for matchday in updatemode['matchdays']:
+        for matchday in kwargs['matchdays']:
             fixtures_url = 'https://api-football-v1.p.rapidapi.com/v2/fixtures/date/' + matchday
             fixtures = api_fixtures(fixtures_url)    
             df_temp = pd.DataFrame(fixtures, columns=list(df_fixtures.columns)) 
@@ -173,6 +180,7 @@ def is_float(test_string):
 def get_odds(fixtures):
     # Get odds from API for all fixtures in the dataframe
     # Every odd is per fixture as the api only returns ten results if all odds per day are requested
+    # The average of "Match Winner" Odds for a fixture of all available bookmakers is returned
 
     headers = api_headers
     querystring = {"timezone":"Europe/Vienna"}
@@ -190,7 +198,7 @@ def get_odds(fixtures):
 
                 for o in odds:
                     o['fixture_id'] = o['fixture']['fixture_id']
-                    o['bookmaker_home'] = 0
+                    o['bookmaker_home'] = 0 # counter for each value as sometimes not all are available
                     o['home_win'] = 0
                     o['bookmaker_draw'] = 0
                     o['draw'] = 0
@@ -227,17 +235,18 @@ def update_fixtures(mode):
     # Load Fixtures for Database - different modes are possible
     # 'leagues' => update all fixtures for all leagues in leagues_list
     # 'days' => update all fixtures for yesterday, today + 2 days into the future
-    # 'live' => update all fixtures currently playing
+    # 'live' => update all fixtures of current day
 
     conn = sqlite3.connect(db_name) 
-
     df_fixtures = pd.DataFrame(columns=['fixture_id', 'league_id', 'event_date', 'round', 'status', 'statusShort', 'homeTeam_id','awayTeam_id','goalsHomeTeam','goalsAwayTeam'])
 
     # Depending on mode - get data from API
     if mode == 'leagues':
+        leagues_list = list(AvailableLeague.objects.values_list('api_id', flat=True)) # gets the list of available leagues from the database and converts to a list
         df_fixtures = get_fixtures(df_fixtures, mode=mode, leagues_list = leagues_list)
     elif mode == 'days':
         td = date.today() # get current date
+        # create list of relevant match days
         matchdays = [(td+timedelta(days=-1)).strftime('%Y-%m-%d'), td.strftime('%Y-%m-%d'), (td+timedelta(days=1)).strftime('%Y-%m-%d'), (td+timedelta(days=2)).strftime('%Y-%m-%d')]
         df_fixtures = get_fixtures(df_fixtures, mode=mode, matchdays = matchdays)
     else:
@@ -253,7 +262,6 @@ def update_fixtures(mode):
     # internal ids for teams and league have to be added
     # Read from database into pandas dataframe
     df_db_leagues = pd.read_sql('SELECT id AS my_league_id, api_id AS league_id FROM game_league', con=conn)
-    df_db_teams = pd.read_sql('SELECT id AS my_team_id, api_id as team_id FROM game_team', con=conn)
 
     # Join Data to get my internal IDs
     # first the leagues, as this is an inner join it also get's rid of fixtures which are not in a relevant league
@@ -261,21 +269,13 @@ def update_fixtures(mode):
 
     # Update odds only for relevant fixtures and only in mode 'days'
     if mode == 'days':
-        df_fixtures_today = df_fixtures[(df_fixtures.dt_event_date < matchdays[2]) & (df_fixtures.dt_event_date > matchdays[0])]
+        df_fixtures_today = df_fixtures[df_fixtures['dt_event_date'].dt.date == pd.to_datetime(matchdays[1]).date()] # Only date part is compared
         df_odds = get_odds(df_fixtures_today['fixture_id'].tolist()) # odds are only updated for current day + two days, but not for live games
         # Join odds data with fixtures data - not all fixtures have odds available - therefore a left outer join has to be used
         df_fixtures = pd.merge(df_fixtures, df_odds, how='left', on='fixture_id')
     else:
         df_fixtures = df_fixtures.reindex(df_fixtures.columns.tolist() + ['home_win','draw','away_win'], axis = 1)  # add the columns which usually come from odds 
  
-    # home team
-    df_db_hometeams = df_db_teams.rename(columns={'my_team_id' : 'my_homeTeam_id', 'team_id' : 'homeTeam_id'})
-    df_fixtures = pd.merge(df_fixtures,df_db_hometeams, on='homeTeam_id')
-
-    # away team
-    df_db_awayteams = df_db_teams.rename(columns={'my_team_id' : 'my_awayTeam_id', 'team_id' : 'awayTeam_id'})
-    df_fixtures = pd.merge(df_fixtures,df_db_awayteams, on='awayTeam_id')
-
     # with Fixture object
     for tu_fixture in df_fixtures.itertuples(index=False):
         fo = Fixture.objects.all().filter(api_id = tu_fixture.fixture_id)
@@ -313,11 +313,13 @@ def update_fixtures(mode):
                 if not pd.isna(tu_fixture.away_win):
                     fo.update(away_odds = tu_fixture.away_win)
         
+    # Save last update time to database
     fixture_update = UpdateSchedule.objects.all()
     fixture_update.update(last_fixture_update=make_aware(datetime.now())) # Make aware is neccesary because the field is timezone aware
 
     # after the fixture data is updated, the game scores are updated as well
     UpdateGameScores()
+
 
 def scheduled_update():
     # This function should be called daily to update data from the API as required

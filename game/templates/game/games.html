@@ -4,41 +4,40 @@
 
 <div class="container">
     <div class="jumbotron">
-        <p class="h2 text-center">Current Games</p>
-        <div class="container rounded mt-5" style="max-width: 300px;">
-            {% include 'game/messages.html' %}
-            <table class="table">
-                <tbody>
-                    <!-- Active Games -->
-                    {% for game in games %}
-                        <tr>
-                            <td><a class="btn-info btn-block rounded text-center" style="background-color: #6b2801;" href="{% url 'gamedetail' game.id %}">{{game.name}}</a></td>
-                            <td><a href="ranking"><i class="fas fa-trophy ml-1"></i></a></td>
-                            <td><a href="invite"><i class="fas fa-share-alt ml-1"></i></a></td>
-                        </tr>
-                    {% endfor %}
-                    
-                    <!-- Invited Games -->
-                    {% for invite in invitations %}
-                        <tr>
-                            <td><span class="btn-info btn-block rounded text-center" style="background-color: #6b280181;">{{invite.name}}</span></td>
-                            <td>
-                                <form action="{% url 'game_accept' invite.id %}" method="POST">
+        <p class="h2 text-center mb-4">Current Games</p>
+        <!-- <div class="container rounded mt-5" style="max-width: 600px;"> -->
+        {% include 'game/messages.html' %}
+        
+        <div class="row mt-2">
+            <div class="col-md-6 offset-md-3 text-center border">
+                {% for game in games %}
+                    <div class="row mb-3">
+                        <div class="col-6"><a class="btn-info btn-lg btn-block rounded text-center" style="background-color: #6b2801;" href="{% url 'gamedetail' game.id %}">{{game.name}}</a></div>
+                        <div class="col-1 text-center"><a class="btn btn-lg bg-transparent" href="{% url 'ranking' game.id %}"><span style="color:#C9B037";><i class="fas fa-trophy"></i></span></a></div>
+                        <div class="col-1 text-center ml-2"><a class="btn btn-lg bg-transparent" href="{% url 'invite' game.id %}"><i class="fas fa-share-alt"></i></a></div>
+                    </div>
+                {% endfor %}
+                {% for invite in invitations %}
+                    <div class="row mb-3">
+                        <div class="col-6"><span class="btn-info btn-lg btn-block rounded text-center" style="background-color: #6b280181;">{{invite.name}}</span></div>
+                        <div class="div col-1 text-center">
+                            <form action="{% url 'game_accept' invite.id %}" method="POST">
+                            {% csrf_token %}
+                                <button class="btn btn-lg bg-transparent ml-1"><i class="fas fa-check-square text-success"></i></button>
+                            </form>
+                        </div>
+                        <div class="col-1 text-center ml-2">
+                            <form action="{% url 'game_decline' invite.id %}" method="POST">
                                 {% csrf_token %}
-                                    <button class="border-0"><i class="fas fa-check-square text-success"></i></button>
-                                </form>
-                            </td>
-                            <td>
-                                <form action="{% url 'game_decline' invite.id %}" method="POST">
-                                {% csrf_token %}
-                                    <button class="border-0"><i class="fas fa-ban text-danger"></i></button>
-                                </form>
-                            </td>
-                        </tr>
+                                <button class="btn btn-lg bg-transparent ml-1"><i class="fas fa-ban text-danger"></i></button>
+                            </form>
+                        </div>
+                    </div>
                     {% endfor %}
-                </tbody>
-            </table>
-            <a href="new_game" class="btn-info btn-block rounded text-center" style="background-color: #6b2801;">Create New Game</a>
+                    <div class="row mt-4">
+                    <a href="new_game" class="btn-info btn-lg btn-block rounded text-center">Create New Game</a>
+                    </div>
+            </div>
         </div>
     </div>
 </div>

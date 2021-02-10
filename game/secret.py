@@ -7,5 +7,3 @@ api_headers = {
 # Path to Database
 db_name = 'football_predict/db.sqlite3'
 
-# Define relevant leagues - maybe in Database?
-leagues_list = [2779,2715,2781,2790,2791,2677,2755,2771,2777,2833,2664,2857]

@@ -1,0 +1,57 @@
+{% extends "game/base.html" %} 
+
+{% block content %}
+
+<div class="container">
+    <div class="h1 text-center btn-block btn-info pb-3 pt-3">{{game.name}}</div>
+    <div class="h2 text-center mt-3 mb-3">{{player.user.username}}</div>
+
+
+    <div class="list-group">   
+        <div class="list-group-item">
+            <div class="row">
+                <div class="col-2 h6 text-center">League</div>
+                <div class="col-2 h6 text-center">Match Start</div>
+                <div class="col-1 h6 text-center">Status</div>
+                <div class="col-2 h6 text-center">Home Team</div>
+                <div class="col-2 h6 text-center">Away Team</div>
+                <div class="col-1 h6 text-center">Score</div>
+                <div class="col-1 h6 text-center">Tipp</div>
+                <div class="col-1 h6 text-center">Points</div>
+                
+            </div>
+        </div>
+        {% for result in results %}
+            <a href="{% url 'info_fixture' game_id=game.id fixture_id=result.id %}" class="list-group-item list-group-item-action align-center">
+                <div class="row ">
+                    <div class="col-2">
+                        <div class="row">
+                            <div class="col-4"><img src={{result.l_logo}} class="img-fluid" style="width:100%;"></div>
+                            <div class="col-8 text-center"><span class="align-middle">{{result.l_name}}</span></div>
+                        </div>
+                    </div>  
+                    <div class="col-2 text-center"><span class="align-middle">{{result.match_start|date:'D, d.m H:i'}}</span></div>
+                    <div class="col-1 text-center">{{result.status}}</div>
+                    <div class="col-2">
+                        <div class="row">
+                            <div class="col-4"><span><img src={{result.ht_logo}} class="img-fluid " style="width:100%;"></span></div>
+                            <div class="col-8 text-center"><span class="align-middle">{{result.ht_name}}</span></div>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <div class="row">
+                            <div class="col-4"><img src={{result.at_logo}} class="img-fluid" style="width:100%;"></div>
+                            <div class="col-8 text-center"><span class="align-middle">{{result.at_name}}</span></div>
+                        </div>
+                    </div>
+                    <div class="col-1 text-center"><span class="align-middle">{% if result.home_goals is not None %}{{result.home_goals}} : {{result.away_goals}}{% endif %}</span></div>
+                    <div class="col-1 text-center"><span class="align-middle">{% if result.tipp_home is not None %} {{result.tipp_home}} : {{result.tipp_away}}{% endif %}</span></div>
+                    <div class="col-1 text-center {% if result.yn_final == 0 %} text-muted {% endif %} "><span class="align-middle">{% if result.score is not None %}{{result.score}}{% endif %}</span></div>
+                </div>
+            </a>
+        {% endfor %}
+
+</div>
+
+
+{% endblock content %}

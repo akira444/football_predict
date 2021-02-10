@@ -3,4 +3,60 @@
 {% block content %}
 
 
+<div class="container">
+    <div class="h1 text-center btn-block btn-info pb-3 pt-3">{{game.name}}</div>
+
+    <div class="list-group">   
+        <div class="list-group-item">
+            <div class="row">
+                <div class="col-1 text-center">Rank</div>
+                <div class="col-2 ">Player</div>
+                <div class="col-1 text-center"><span>Score</span></div>
+                <div class="col-1 text-center"><span>Tipps</span></div>
+                <div class="col-7">
+                    <div class="row">
+                        <div class="col-3 text-center"><span>Exact ({{game.pts_exact}} Pts)</span></div>
+                        <div class="col-3 text-center"><span>Difference ({{game.pts_difference}} Pts)</span></div>
+                        <div class="col-3 text-center"><span>Winner ({{game.pts_winner}} Pts)</span></div>
+                        <div class="col-3 text-center"><span>Wrong  ({{game.pts_wrong}} Pts)</span></div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        {% for ranking in rankings %}
+            <a href="{% url 'ranking_detail' game_id=game.id player_id=ranking.player_id %}" class="list-group-item list-group-item-action">
+                <div class="row">
+                    <div class="col-1">
+                        <div class="row">
+                            <div class="col-1 text-center"><span class="align-left" 
+                                {% if forloop.counter == 1 %}
+                                    style="color:#C9B037;"
+                                {% elif forloop.counter == 2 %}
+                                    style="color:#B4B4B4;" 
+                                {% elif forloop.counter == 3 %}
+                                    style="color:#AD8A56;" 
+                                {% else %}
+                                    style="color:#FFFFFF;"
+                                {% endif %}><i class="fas fa-trophy mr-2 ml-2"></i></span></div>
+                            <div class="col-6 offset-1">{{ forloop.counter }}.</div>
+                        </div>  
+                    </div>  
+                    <div class="col-2">{{ranking.player__user__username}}</div>
+                    <div class="col-1 text-center"><span>{{ranking.t_score}}</span></div>
+                    <div class="col-1 text-center"><span>{{ranking.t_total}}</span></div>
+                    <div class="col-7">
+                        <div class="row">
+                            <div class="col-3 text-center"><span>{{ranking.t_exact}}</span></div>
+                            <div class="col-3 text-center"><span>{{ranking.t_difference}}</span></div>
+                            <div class="col-3 text-center"><span>{{ranking.t_winner}}</span></div>
+                            <div class="col-3 text-center"><span>{{ranking.t_wrong}}</span></div>
+                        </div>
+                    </div>  
+                </div>
+            </a>
+        {% endfor %}
+
+</div>
+
 {% endblock content %}

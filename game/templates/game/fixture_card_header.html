@@ -1,0 +1,33 @@
+{% if fixture %}
+
+    <div class="row align-items-center">
+        <div class="col-4 offset-4 text-center">
+            <span><img src={{fixture.league.logo}} class="img-fluid" style="width:25%;"></span>
+        </div>
+    </div>
+    <div class="row align-items-center ">
+        <div class="col text-center">
+            <span class="h5 text-center">{{fixture.league.name}}</span>
+        </div>
+    </div>
+    <div class="row align-items-center mt-3">
+        <div class="col-5 text-center">
+            <span><img src={{fixture.home_team.logo}} class="img-fluid" style="width:50%;"></span>
+        </div>
+        <div class="col-5 offset-2 text-center">
+            <span><img src={{fixture.away_team.logo}} class="img-fluid" style="width:50%;"></span>
+        </div>  
+    </div>
+    <div class="row mt-2 align-items-center">
+        <div class="col-5 text-center">
+            <div class="h4">{{fixture.home_team.name}}</div>
+        </div> 
+        <div class="col-2 text-center">
+            <div class="h3">vs</div>
+        </div> 
+        <div class="col-5 text-center">
+            <div class="h4">{{fixture.away_team.name}}</div>
+        </div>    
+    </div>
+
+{% endif %}

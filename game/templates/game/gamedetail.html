@@ -18,9 +18,8 @@
                         <ul class="list-group list-group-flush">
                             {% for ranking in rankings %}
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span style="color:#C9B037;">{{ forloop.counter }}.<i class="fas fa-trophy mr-2 ml-2"></i>{{ranking.user.username}}</span>
-                                    <!-- Silver: #B4B4B4    Bronze: #AD8A56   -->
-                                    <span>Points: {{ranking.t_score}} Tipps: {{ranking.t_tipps}}</span> 
+                                    <span> {{ forloop.counter }}. {{ranking.user.username}}</span>
+                                    <span>Score: {{ranking.t_score}} Tipps: {{ranking.t_tipps}}</span> 
                                 </li>
                             {% endfor %}
                         </ul>
