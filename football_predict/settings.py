@@ -136,3 +136,8 @@ MESSAGE_TAGS = {
 
 # Crispy template pack for bootstrap 4
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
+try:
+    from .local_settings import *
+except ImportError:
+    print("on prod server")
