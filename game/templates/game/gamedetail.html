@@ -7,20 +7,39 @@
         
         <div class="row ">
             <div class="col-6">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="h4 text-center">Current Ranking</div>
+                <div class="row justify-content-center">
+                    <div class="col-8">
+                        <div class="text-center">
+                            <a class="btn btn-outline-secondary btn-block" href="{% url 'ranking' game.id %}">Current Ranking</a>
+                        </div>
                     </div>
+                </div>
+
+                <div class="row mt-2 justify-content-center">
+                    <div class="col-8">
+                        <div class="list-group">
+                            <div class="list-group-item border-0">
+                                <div class="row justify-content-center">   
+                                    <div class="col-5 ">Player</div>
+                                    <div class="col-3 text-center">Score</div>
+                                    <div class="col-2 text-center">Tipps</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>  
                 </div>
 
                 <div class="row justify-content-center">
                     <div class="col-8">
                         <ul class="list-group list-group-flush">
                             {% for ranking in rankings %}
-                                <li class="list-group-item d-flex justify-content-between">
-                                    <span> {{ forloop.counter }}. {{ranking.user.username}}</span>
-                                    <span>Score: {{ranking.t_score}} Tipps: {{ranking.t_tipps}}</span> 
-                                </li>
+                                <a href="{% url 'ranking_detail' game_id=game.id player_id=ranking.id %}" class="list-group-item list-group-item-action">
+                                    <div class="row justify-content-center">
+                                        <div class="col-5 "><span>{{ forloop.counter }}. {{ranking.user.username}}</span></div>
+                                        <div class="col-3 text-center">{{ranking.t_score}}</div>
+                                        <div class="col-2 text-center">{{ranking.t_tipps}}</div>
+                                    </div>
+                                </a>
                             {% endfor %}
                         </ul>
                     </div>

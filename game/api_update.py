@@ -1,3 +1,4 @@
-from game.api_data import scheduled_update
+from api_data import scheduled_update
 
-scheduled_update()
+def main():
+    scheduled_update()

@@ -1,7 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core import validators
-from game.models import League, Game, Player, Tipp
+from .models import League, Game, Player, Tipp
 from django.contrib.auth.models import User 
 
 class SignUpForm(forms.Form):
@@ -23,19 +23,20 @@ class ProfileForm(forms.ModelForm):
         fields = (['username', 'email'])
 
 class TippForm(forms.ModelForm):
-    tipp_home = forms.IntegerField(label='Home Team', widget=forms.TextInput(attrs={'placeholder': '0', 'required': 'true'}))
-    tipp_away = forms.IntegerField(label='Away Team', widget=forms.TextInput(attrs={'placeholder': '0', 'required': 'true'}))
-        
+    tipp_home = forms.IntegerField(label='Home Team', min_value=0, widget=forms.NumberInput(attrs={'placeholder': '0', 'required': 'true'}))
+    tipp_away = forms.IntegerField(label='Away Team', min_value=0, widget=forms.NumberInput(attrs={'placeholder': '0', 'required': 'true'}))
+
     class Meta:
         model = Tipp
         fields = (['tipp_home','tipp_away'])
 
+
 class GameForm(forms.ModelForm):
     name = forms.CharField(label='Name of the Game', widget=forms.TextInput(attrs={'placeholder': 'MyGame', 'required': 'true'}))
-    pts_exact = forms.IntegerField(label='Exact Result',  widget=forms.TextInput(attrs={'placeholder': '0', 'required': 'true'}))
-    pts_difference = forms.IntegerField(label='Goal Difference',  widget=forms.TextInput(attrs={'placeholder': '0', 'required': 'true'}))
-    pts_winner = forms.IntegerField(label='Winner',  widget=forms.TextInput(attrs={'placeholder': '0', 'required': 'true'}))
-    pts_wrong = forms.IntegerField(label='Wrong Winner',  widget=forms.TextInput(attrs={'placeholder': '0', 'required': 'false'}))
+    pts_exact = forms.IntegerField(label='Exact Result',  widget=forms.NumberInput(attrs={'placeholder': '0', 'required': 'true'}))
+    pts_difference = forms.IntegerField(label='Goal Difference',  widget=forms.NumberInput(attrs={'placeholder': '0', 'required': 'true'}))
+    pts_winner = forms.IntegerField(label='Winner',  widget=forms.NumberInput(attrs={'placeholder': '0', 'required': 'true'}))
+    pts_wrong = forms.IntegerField(label='Wrong Winner',  widget=forms.NumberInput(attrs={'placeholder': '0', 'required': 'false'}))
     leagues = forms.ModelMultipleChoiceField(queryset=League.objects.all(), widget=forms.CheckboxSelectMultiple)
     players = forms.ModelMultipleChoiceField(queryset=Player.objects.all(), widget=forms.CheckboxSelectMultiple)
 

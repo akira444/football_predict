@@ -3,7 +3,7 @@
 {% block content %}
 
 <div class="container">
-    <div class="h1 text-center btn-block btn-info pb-3 pt-3">{{game.name}}</div>
+    <a class="h1 text-center btn-block btn-info pb-3 pt-3" href="{% url 'gamedetail' game.id %}">{{game.name}}</a>
     <div class="h2 text-center mt-3 mb-3">{{player.user.username}}</div>
 
 

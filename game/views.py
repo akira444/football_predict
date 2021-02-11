@@ -9,10 +9,10 @@ from django.db import IntegrityError
 from django.db.models import Q, F, Count, Sum
 from django.utils.timezone import make_aware
 import requests
-from game.models import League, Fixture, UpdateSchedule, Player, Player_Games, Game, Tipp
-from game.forms import SignUpForm, GameForm, TippForm, InviteForm, ProfileForm
-import game.api_data as api_calls
-from game.data_utilities import GetTippList, TippQuery
+from .models import League, Fixture, UpdateSchedule, Player, Player_Games, Game, Tipp
+from .forms import SignUpForm, GameForm, TippForm, InviteForm, ProfileForm
+from .api_data import update_fixtures
+from .data_utilities import GetTippList, TippQuery
 from datetime import date, timedelta, datetime
 import pandas as pd
 
@@ -55,7 +55,7 @@ class SignUpView(View):
             return redirect('games')
         except IntegrityError:
             messages.error(request, 'Username is already taken, please try another!')
-            return render(request, 'game/signup.html', ctx)
+            return render(request, 'game/signup.html')
 
 class LoginView(View):
     def get(self, request):
@@ -187,7 +187,7 @@ class ProfileView(LoginRequiredMixin, View):
             return redirect('games')
         except IntegrityError:
             messages.error(request, 'Username is already taken, please try another!')
-            return render(request, self.template, ctx)
+            return render(request, self.template)
 
 class GameDetail(LoginRequiredMixin, View):
     # Game Detail
@@ -231,7 +231,7 @@ class TodayView(LoginRequiredMixin, View):
 class TodayRefreshView(LoginRequiredMixin, View):
     def post(self, request):
         # Refresh Data on Today page via API
-        api_calls.update_fixtures(mode='live')
+        update_fixtures(mode='live')
         returnto = request.POST.get('next', '/')
         return redirect(returnto)
 
@@ -351,7 +351,7 @@ class RankingView(LoginRequiredMixin, View):
 class RankingDetailView(LoginRequiredMixin, View):
     template = 'game/ranking_detail.html'
     def get(self, request, game_id, player_id):
-        player = Player.objects.all().filter(user__username = request.user).get()
+        player = Player.objects.all().filter(pk=player_id).get()
         game = Game.objects.all().filter(id=game_id).get()
         results = TippQuery(player_id=player_id, game_id=game_id, to_date=datetime.utcnow(), order='DESC') 
         ctx = {'game' : game, 'results' : results, 'player' : player}
@@ -362,6 +362,6 @@ class RankingDetailView(LoginRequiredMixin, View):
 # API Call in mode days
 def TestDay(request):
     if request.method == 'POST':
-        api_calls.update_fixtures(mode='days')
+        update_fixtures(mode='days')
         messages.success(request, 'Daily update of API Data completed')
         return redirect('test_api')

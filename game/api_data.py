@@ -3,9 +3,9 @@ import pandas as pd
 from datetime import datetime, date, timedelta
 from django.utils.timezone import make_aware
 import sqlite3
-from game.secret import api_headers, db_name
-from game.models import UpdateSchedule, Fixture, Team, League, AvailableLeague
-from game.data_utilities import UpdateGameScores
+from .secret import api_headers, db_name
+from .models import UpdateSchedule, Fixture, Team, League, AvailableLeague
+from .data_utilities import UpdateGameScores
 
 def update_countries():
     # Fill Country table - only run once, or update very rarely
@@ -85,6 +85,9 @@ def update_teams():
 
     # Read countries from database
     df_db_countries = pd.read_sql('SELECT id AS my_country_id, name as country FROM game_country', con=conn)
+
+    # Filter only relevant leagues
+    leagues_list = list(AvailableLeague.objects.values_list('api_id', flat=True)) # gets the list of available leagues from the database and converts to a list
 
     # Fill teams table in database for all leagues
     # First initialise the dataframe holding all the data
