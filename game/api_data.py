@@ -1,6 +1,6 @@
 import requests
 import pandas as pd
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, time
 from django.utils.timezone import make_aware
 import sqlite3
 from .secret import api_headers, db_name
@@ -32,7 +32,6 @@ def update_countries():
             cur.execute('INSERT INTO game_country (name, code, flag) VALUES (?,?,?)', (country.country, country.code, country.flag) )
             conn.commit()
     cur.close()
-
 
 def update_leagues():
     # The Leagues update is called once a week
@@ -77,7 +76,6 @@ def update_leagues():
     cur.close()
 
     return new_leagues
-
 
 def update_teams():
     headers = api_headers
@@ -142,7 +140,6 @@ def api_fixtures(api_url):
         fixture['awayTeam_name'] = fixture['awayTeam']['team_name']
 
     return fixtures
-
 
 def get_fixtures(df_fixtures, **kwargs):
     # **kwargs allows to pass flexible parameters as key-value pairs
@@ -237,7 +234,7 @@ def get_odds(fixtures):
 def update_fixtures(mode):
     # Load Fixtures for Database - different modes are possible
     # 'leagues' => update all fixtures for all leagues in leagues_list
-    # 'days' => update all fixtures for yesterday, today + 2 days into the future
+    # 'days' => update all fixtures since the last update until today + 2 days into the future
     # 'live' => update all fixtures of current day
 
     conn = sqlite3.connect(db_name)
@@ -248,9 +245,16 @@ def update_fixtures(mode):
         leagues_list = list(AvailableLeague.objects.values_list('api_id', flat=True)) # gets the list of available leagues from the database and converts to a list
         df_fixtures = get_fixtures(df_fixtures, mode=mode, leagues_list = leagues_list)
     elif mode == 'days':
-        td = date.today() # get current date
+        last_update = UpdateSchedule.objects.all().get()
+        matchday = last_update.last_fixture_update.date()
+        matchday = datetime.combine(matchday, time())
+        matchdays = list()
+        last_day = datetime.today()+timedelta(days=2)
         # create list of relevant match days
-        matchdays = [(td+timedelta(days=-1)).strftime('%Y-%m-%d'), td.strftime('%Y-%m-%d'), (td+timedelta(days=1)).strftime('%Y-%m-%d'), (td+timedelta(days=2)).strftime('%Y-%m-%d')]
+        while matchday <= last_day:
+            matchdays.append(matchday.strftime('%Y-%m-%d'))
+            matchday = matchday+timedelta(days=1)
+
         df_fixtures = get_fixtures(df_fixtures, mode=mode, matchdays = matchdays)
     else:
         # live games
@@ -272,7 +276,7 @@ def update_fixtures(mode):
 
     # Update odds only for relevant fixtures and only in mode 'days'
     if mode == 'days':
-        df_fixtures_today = df_fixtures[df_fixtures['dt_event_date'].dt.date == pd.to_datetime(matchdays[1]).date()] # Only date part is compared
+        df_fixtures_today = df_fixtures[df_fixtures['dt_event_date'].dt.date == date.today()] # Only date part is compared
         df_odds = get_odds(df_fixtures_today['fixture_id'].tolist()) # odds are only updated for current day + two days, but not for live games
         # Join odds data with fixtures data - not all fixtures have odds available - therefore a left outer join has to be used
         df_fixtures = pd.merge(df_fixtures, df_odds, how='left', on='fixture_id')

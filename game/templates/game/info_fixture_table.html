@@ -1,0 +1,24 @@
+
+
+
+{% if days == 0 %}
+    <td class="align-middle">{{fixture.g_name}}</td>
+{% endif %}
+<td class="align-middle"><img src={{fixture.l_logo}} class="img-fluid" style="width:100%;"></td>
+<td class="align-middle">{{fixture.l_name}}</td>
+{% if days > 0 %}
+    <td class="align-middle">{{fixture.match_start|date:'D, d.m'}}</td>
+{% endif %}
+<td class="align-middle">{{fixture.match_start|date:'H:i'}}</td>
+<td class="align-middle">{{fixture.status}}</td>
+<td class="align-middle {% if fixture.home_odds < fixture.away_odds %} table-success {% endif %}"><img src={{fixture.ht_logo}} class="img-fluid" style="width:100%;"></td>
+<td class="align-middle {% if fixture.home_odds < fixture.away_odds %} table-success {% endif %}">{{fixture.ht_name}}</td>
+<td class="align-middle {% if fixture.home_odds > fixture.away_odds %} table-success {% endif %}"><img src={{fixture.at_logo}} class="img-fluid" style="width:100%;"></td>
+<td class="align-middle {% if fixture.home_odds > fixture.away_odds %} table-success {% endif %}">{{fixture.at_name}}</td>
+<td class="align-middle text-center">{{fixture.home_goals}}</td>
+<td class="align-middle text-center">{{fixture.away_goals}}</td>
+<td class="align-middle">{{fixture.home_odds|floatformat:3}}</td>
+<td class="align-middle">{{fixture.draw_odds|floatformat:3}}</td>
+<td class="align-middle">{{fixture.away_odds|floatformat:3}}</td>
+<td class="align-middle text-center">{{fixture.tipp_home}}</td>
+<td class="align-middle text-center">{{fixture.tipp_away}}</td>

@@ -11,7 +11,7 @@ from django.utils.timezone import make_aware
 import requests
 from .models import League, Fixture, UpdateSchedule, Player, Player_Games, Game, Tipp
 from .forms import SignUpForm, GameForm, TippForm, InviteForm, ProfileForm
-from .api_data import update_fixtures
+from .api_data import scheduled_update, update_fixtures
 from .data_utilities import GetTippList, TippQuery
 from datetime import date, timedelta, datetime
 import pandas as pd
@@ -70,6 +70,7 @@ class LoginView(View):
             return render(request, 'game/login.html')
         else:
             login(request, user)
+            scheduled_update()
             return redirect('games')
 
 # Logout is very simple 
